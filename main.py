@@ -4,11 +4,13 @@ from fastapi import FastAPI,Depends
 from database import session,engine
 import database_models
 from sqlalchemy.orm import Session
-from models import Task
+from models import Task,UserCreate,UserOut,UserLogin
+import hashlib
 
 app = FastAPI()
 
 database_models.Base.metadata.create_all(bind=engine)
+
 
 def get_db():
     db = session()
@@ -18,7 +20,7 @@ def get_db():
         db.close()
 
 
-
+#Task API
 @app.get('/tasks')
 def get_all_task(db:Session = Depends(get_db)):
     db_tasks = db.query(database_models.Task).all()
@@ -63,3 +65,37 @@ def delete_task(id:int,db:Session = Depends(get_db)):
         return "Deleted"
     else:
         return f"No data found on id : {id}"
+    
+
+
+
+
+
+
+#Register API
+@app.post('/register',response_model=UserOut)
+def create_user(data:UserCreate,db:Session =Depends(get_db)):
+    credentials = database_models.User(
+        username = data.username,
+        email = data.email,
+        password = hashlib.sha256(data.password.encode("utf-8")).hexdigest()
+    )
+    db.add(credentials)
+    db.commit()
+    db.refresh(credentials)
+    return credentials
+
+
+#Login API
+@app.post('/login')
+def login_user(data:UserLogin,db:Session =Depends(get_db)):
+    user = db.query(database_models.User).filter(data.username == database_models.User.username).first()
+    if not user:
+        return "User not found!"
+    
+    hashed_pwd = hashlib.sha256(data.password.encode("utf-8")).hexdigest()
+
+    if user.password == hashed_pwd:
+        return "User Found"
+    else:
+        return "Invalid username or password"
