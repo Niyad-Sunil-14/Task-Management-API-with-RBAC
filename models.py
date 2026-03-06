@@ -15,7 +15,7 @@ class Task(BaseModel):
 class UserCreate(BaseModel):
     username : str
     email : EmailStr
-    password : str = Field(min_length=8)
+    password : str
 
 
 class UserOut(BaseModel):

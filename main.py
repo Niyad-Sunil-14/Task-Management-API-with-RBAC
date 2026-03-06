@@ -6,8 +6,20 @@ import database_models
 from sqlalchemy.orm import Session
 from models import Task,UserCreate,UserOut,UserLogin
 import hashlib
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi import HTTPException,status
+from sqlalchemy.exc import IntegrityError
+
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"], 
+    allow_credentials=True,
+    allow_methods=["*"], 
+    allow_headers=["*"],
+)
 
 database_models.Base.metadata.create_all(bind=engine)
 
@@ -75,15 +87,28 @@ def delete_task(id:int,db:Session = Depends(get_db)):
 #Register API
 @app.post('/register',response_model=UserOut)
 def create_user(data:UserCreate,db:Session =Depends(get_db)):
+    if len(data.password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Password should have at least 8 characters"
+        ) 
     credentials = database_models.User(
         username = data.username,
         email = data.email,
         password = hashlib.sha256(data.password.encode("utf-8")).hexdigest()
     )
-    db.add(credentials)
-    db.commit()
-    db.refresh(credentials)
-    return credentials
+    try:
+        db.add(credentials)
+        db.commit()
+        db.refresh(credentials)
+        return credentials
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username or Email already registered"
+        )
+
 
 
 #Login API
@@ -91,11 +116,15 @@ def create_user(data:UserCreate,db:Session =Depends(get_db)):
 def login_user(data:UserLogin,db:Session =Depends(get_db)):
     user = db.query(database_models.User).filter(data.username == database_models.User.username).first()
     if not user:
-        return "User not found!"
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Invalid Username or Password!")
     
     hashed_pwd = hashlib.sha256(data.password.encode("utf-8")).hexdigest()
 
     if user.password == hashed_pwd:
-        return "User Found"
+        return {
+        "status": "success",
+        "username": user.username,
+        "message": "Login successful"
+    }
     else:
-        return "Invalid username or password"
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Invalid Username or Password!")
