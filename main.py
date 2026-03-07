@@ -58,7 +58,7 @@ def get_task_details(id:int,db:Session = Depends(get_db)):
 
 @app.put('/tasks/{id}')
 def edit_task(id:int,data:Task,db:Session = Depends(get_db)):
-    db_task = db.query(database_models.Task).filter(data.id == id).first()
+    db_task = db.query(database_models.Task).filter(database_models.Task.id == id).first()
     if db_task:
         db_task.title = data.title
         db_task.description = data.description
