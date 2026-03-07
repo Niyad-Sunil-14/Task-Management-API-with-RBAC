@@ -1,6 +1,6 @@
 #Task Management api with role based access
 
-from fastapi import FastAPI,Depends
+from fastapi import FastAPI,Depends,Header
 from database import session,engine
 import database_models
 from sqlalchemy.orm import Session
@@ -128,3 +128,22 @@ def login_user(data:UserLogin,db:Session =Depends(get_db)):
     }
     else:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Invalid Username or Password!")
+
+
+
+
+
+def verify_user_status(x_user_name: str = Header(None)):
+    if x_user_name is None:
+        raise HTTPException(
+            status_code=401, 
+            detail="Authentication required. Please log in."
+        )
+    return x_user_name
+
+
+
+@app.get('/getuser')
+def get_user(db:Session = Depends(get_db),current_user : Session = Depends(verify_user_status)):
+    user = db.query(database_models.User).filter(database_models.User.username == current_user).first()
+    return user

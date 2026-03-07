@@ -11,8 +11,7 @@ import Box from '@mui/material/Box';
 import { Divider, Chip, Stack } from '@mui/material';
 import Typography from '@mui/material/Typography';
 import CloseIcon from '@mui/icons-material/Close';
-import { Link, Navigate } from 'react-router';
-import { ProtectedRoutes } from '../../App';
+import { Link } from 'react-router';
 
 
 const style = {
@@ -60,7 +59,18 @@ const columns = [
       const [open, setOpen] = React.useState(false);
       const handleClose = () => setOpen(false); 
 
+      const [user,setUser] = useState("")
       const isLoggedIn = localStorage.getItem("isLoggedIn")
+
+      const getUser = () => {
+        Axiosinstance.get('getuser').then((res)=>{
+          setUser(res.data.role)
+        })
+      }
+
+      useEffect(()=>{
+        getUser()
+      },[])
 
      return (
       <>
@@ -73,10 +83,8 @@ const columns = [
           <VisibilityIcon fontSize="small" />
           </IconButton>
 
-
           {
-            isLoggedIn?(
-            <>
+            (isLoggedIn && (user === "admin" || user === "manager" || user === "user")) ? (
               <Link to={`edit-task/${params.id}`}>
                 <IconButton
                   color="primary"
@@ -86,6 +94,12 @@ const columns = [
                   <EditIcon fontSize="small" />
                 </IconButton>
               </Link>
+            )
+            :""
+          }
+
+          {
+            user == "admin"?(
               <IconButton 
                 color="error" 
                 size="small"
@@ -93,7 +107,6 @@ const columns = [
               >
               <DeleteIcon fontSize="small" />
               </IconButton>
-            </>
             )
             :""
           }
@@ -164,14 +177,17 @@ const columns = [
   },
 ];
 
-const paginationModel = { page: 0, pageSize: 5 };
+const paginationModel = { page: 0, pageSize: 8 };
 
 export default function TaskList() {
   const [data,setData] = useState([])
 
   const getData = ()=> Axiosinstance.get('tasks').then((res)=>{
     setData(res.data)
+    console.log(res.data);
+    
   })
+
 
   useEffect(()=>{
     getData()
@@ -185,7 +201,7 @@ export default function TaskList() {
           rows={data}
           columns={columns}
           initialState={{ pagination: { paginationModel } }}
-          pageSizeOptions={[5, 10]}
+          pageSizeOptions={[8, 10]}
           sx={{ border: 0 }}
           />
       </Paper>
