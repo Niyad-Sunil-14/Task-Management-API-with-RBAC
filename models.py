@@ -2,9 +2,8 @@ from pydantic import BaseModel,Field,EmailStr
 from database_models import Status,UserRole
 
 class Task(BaseModel):
-    id : int
-    title : str
-    description : str = Field(max_length=2000)
+    title : str = Field(...,min_length=1)
+    description : str = Field(...,min_length=1,max_length=2000)
     status : Status = Status.TODO
 
 

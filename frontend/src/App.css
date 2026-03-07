@@ -18,3 +18,10 @@
     align-content: center;
 }
  
+
+.form{
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    gap:15px;
+}

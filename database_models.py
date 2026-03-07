@@ -7,16 +7,16 @@ from enum import Enum
 Base = declarative_base()
 
 class Status(str,Enum):
-    TODO = "todo"
-    IN_PROGRESS = "in_progress"
-    IN_REVIEW = 'in_review'
-    COMPLETED = "completed"
+    TODO = "To Do"
+    IN_PROGRESS = "In Progress"
+    IN_REVIEW = 'In Review'
+    COMPLETED = "Completed"
 
 class Task(Base):
     __tablename__ = "tasks"
     id = Column(Integer,primary_key=True,index=True)
-    title = Column(String)
-    description = Column(Text)
+    title = Column(String,nullable=False)
+    description = Column(Text,nullable=False)
     status = Column(sqlEnum(Status),default=Status.TODO)
 
 
